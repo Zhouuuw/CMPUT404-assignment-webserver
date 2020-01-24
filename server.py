@@ -59,14 +59,14 @@ class MyWebServer(socketserver.BaseRequestHandler):
     
     def handle(self):
         self.data = self.request.recv(1024).strip()
-        print ("Got a request of: %s\n" % self.data)
+        #print ("Got a request of: %s\n" % self.data)
         try:
             # Get HTTP method and url
             data_lst = self.data.decode("utf-8").split("\r\n")
-            print(data_lst)
+            #print(data_lst)
 
             temp = data_lst[0].split(" ")
-            print(temp)
+            #print(temp)
             if len(temp) != 3:
                 raise Exception("HTTP request header invalid")
             self.method = temp[0]
@@ -85,7 +85,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
                 current_dict = os.getcwd()+"/www"
                 file_path = current_dict + self.url
-                print(file_path)
+                #print(file_path)
                 
                 if not os.path.isfile(file_path) or not os.access(file_path,os.R_OK):
                     raise Error404("file not found")
@@ -94,7 +94,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
                     # https://www.cnblogs.com/jhao/p/7243043.html  
                 else:
                     filename,file_extension = os.path.splitext(file_path)
-                    print(file_extension)
+                    #print(file_extension)
                     if file_extension == ".html":
                         content = self.version + " 200 ok\r\nContent-Type: text/html\r\n\r\n"
                     elif file_extension == ".css":
@@ -108,17 +108,14 @@ class MyWebServer(socketserver.BaseRequestHandler):
                     # https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Basics_of_HTTP/MIME_types
 
         except Error301 as e:
-            print(e)
             response = self.version + " 301 Moved Permanently\r\nlocation:"+self.url+"/\r\nContent-Type: text/html\r\n\r\n"
             self.request.sendall(response.encode())
 
         except Error405 as e:
-            print(e)
             response = self.version + " 405 Method Not Allowed\r\nContent-Type:text/html\r\n\r\n"
             self.request.sendall(response.encode())
 
         except Error404 as e:
-            print(e)
             response = self.version + " 404 Not Found\r\nContent-Type: text/html\r\n\r\n"
             self.request.sendall(response.encode())
         
