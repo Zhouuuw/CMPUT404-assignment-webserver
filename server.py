@@ -2,7 +2,7 @@
 import socketserver
 import os
 
-# Copyright 2013 Abram Hindle, Eddie Antonio Santos
+# Copyright 2019 Yizhou W
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,16 +21,13 @@ import os
 # some of the code is Copyright © 2001-2013 Python Software
 # Foundation; All Rights Reserved
 #
-# http://docs.python.org/2/library/socketserver.html
+# https://docs.python.org/3.6/library/socketserver.html#socketserver.BaseRequestHandler.handle
+# https://github.com/python/cpython/blob/3.6/Lib/socketserver.py
 #
 # run: python freetests.py
 
 # try: curl -v -X GET http://127.0.0.1:8080/
 
-# source code should be cited: 
-# https://github.com/python/cpython/blob/3.6/Lib/socketserver.py
-# https://docs.python.org/3.6/library/socketserver.html#socketserver.BaseRequestHandler.handle
-#
 
 class Error404(Exception):
     def __init__(self,ErrorInfo):
@@ -53,8 +50,6 @@ class Error301(Exception):
     def __str__(self):
         return self.errorinfo
 
-# error raising reference:https://blog.csdn.net/skullFang/article/details/78820541
-
 class MyWebServer(socketserver.BaseRequestHandler):
     
     def handle(self):
@@ -63,8 +58,6 @@ class MyWebServer(socketserver.BaseRequestHandler):
         try:
             # Get HTTP method and url
             data_lst = self.data.decode("utf-8").split("\r\n")
-            #print(data_lst)
-
             temp = data_lst[0].split(" ")
             #print(temp)
             if len(temp) != 3:
@@ -73,10 +66,13 @@ class MyWebServer(socketserver.BaseRequestHandler):
             self.url = temp[1]
             self.version = temp[2]
 
+            # say 405 to method other than get
             if self.method.upper()  != "GET":
                 raise Error405("405 Method Not Allowed")
 
+            # handle get request
             else:
+                # check validation of url
                 if self.url[-5:] != '.html' and self.url[-4:] != ".css" and self.url[-1] != "/":
                     raise Error301("may need path ending")
 
@@ -85,13 +81,11 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
                 current_dict = os.getcwd()+"/www"
                 file_path = current_dict + self.url
-                #print(file_path)
                 
+                # check if file exist
                 if not os.path.isfile(file_path) or not os.access(file_path,os.R_OK):
                     raise Error404("file not found")
-                    #the file is not exist reference:
-                    # https://docs.python.org/3.6/library/os.path.html 
-                    # https://www.cnblogs.com/jhao/p/7243043.html  
+    
                 else:
                     filename,file_extension = os.path.splitext(file_path)
                     #print(file_extension)
@@ -103,10 +97,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
                     content += file.read() 
                     file.close()
                     self.request.sendall(content.encode())
-                    # reference about header files:
-                    # https://www.runoob.com/http/http-header-fields.html
-                    # https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Basics_of_HTTP/MIME_types
-
+    
         except Error301 as e:
             response = self.version + " 301 Moved Permanently\r\nlocation:"+self.url+"/\r\nContent-Type: text/html\r\n\r\n"
             self.request.sendall(response.encode())
